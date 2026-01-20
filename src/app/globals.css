@@ -1,0 +1,248 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --font-inter: 'Inter', sans-serif;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-inter);
+  background: #fafafa;
+}
+
+/* Minimal scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Clean background */
+.clean-bg {
+  background: #ffffff;
+}
+
+/* Subtle gradient for accent sections */
+.accent-gradient {
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+}
+
+/* Modern card style */
+.card-modern {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  transition: all 0.2s ease;
+}
+
+.card-modern:hover {
+  border-color: #d4d4d4;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+/* Input styles - Tesla inspired */
+.input-modern {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  transition: all 0.2s ease;
+}
+
+.input-modern:hover {
+  border-color: #d4d4d4;
+}
+
+.input-modern:focus {
+  border-color: #171717;
+  box-shadow: none;
+  outline: none;
+}
+
+/* Button primary - black like Tesla */
+.btn-primary {
+  background: #171717;
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: #262626;
+}
+
+.btn-primary:active {
+  background: #0a0a0a;
+  transform: scale(0.98);
+}
+
+/* Button secondary */
+.btn-secondary {
+  background: #f5f5f5;
+  color: #171717;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #e5e5e5;
+}
+
+/* Animated underline for links */
+.link-underline {
+  position: relative;
+}
+
+.link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: #171717;
+  transition: width 0.3s ease;
+}
+
+.link-underline:hover::after {
+  width: 100%;
+}
+
+/* Progress bar */
+.progress-bar {
+  background: #e5e5e5;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background: #171717;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Step indicator */
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e5e5e5;
+  transition: all 0.3s ease;
+}
+
+.step-dot.active {
+  background: #171717;
+  transform: scale(1.25);
+}
+
+.step-dot.completed {
+  background: #171717;
+}
+
+/* Stat number animation */
+@keyframes number-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-number {
+  animation: number-reveal 0.6s ease-out forwards;
+}
+
+/* Subtle float animation - playful touch */
+@keyframes subtle-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.float-subtle {
+  animation: subtle-float 3s ease-in-out infinite;
+}
+
+/* Confetti for success */
+.confetti {
+  position: absolute;
+  animation: confetti-fall 3s ease-out forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+/* Textarea */
+textarea {
+  resize: none;
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e5e5e5, transparent);
+}
+
+/* Focus ring for accessibility */
+.focus-ring:focus-visible {
+  outline: 2px solid #171717;
+  outline-offset: 2px;
+}
+
+/* Loading spinner */
+.spinner {
+  border: 2px solid #e5e5e5;
+  border-top-color: #171717;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Playful accent color - coral */
+.accent-coral {
+  color: #ff6b4d;
+}
+
+.bg-accent-coral {
+  background: #ff6b4d;
+}
+
+/* Hover lift effect */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+}
