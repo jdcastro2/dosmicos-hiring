@@ -107,7 +107,14 @@ export default function AdminDashboard() {
     addWrappedText(`Teléfono: ${app.phone}`, 11)
     addWrappedText(`Universidad: ${app.university}`, 11)
     addWrappedText(`Portafolio: ${app.portfolio_link || 'No proporcionado'}`, 11)
+    addWrappedText(`Hoja de vida: ${app.resume_url ? 'Adjunta' : 'No proporcionada'}`, 11)
     addWrappedText(`Fecha: ${app.created_at ? formatDate(app.created_at) : 'N/A'}`, 11)
+
+    // Impressive Achievement section
+    if (app.impressive_achievement) {
+      addSectionTitle('Logro más impresionante')
+      addWrappedText(app.impressive_achievement, 10)
+    }
 
     // Diagnostic section
     addSectionTitle('Diagnóstico Rápido')
@@ -400,8 +407,34 @@ export default function AdminDashboard() {
                         </a>
                       </div>
                     )}
+                    {selectedApp.resume_url && (
+                      <div className="col-span-2">
+                        <p className="text-sm text-neutral-500">Hoja de vida</p>
+                        <a
+                          href={selectedApp.resume_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline flex items-center gap-1"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Descargar CV
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </section>
+
+                {/* Impressive Achievement */}
+                {selectedApp.impressive_achievement && (
+                  <section>
+                    <h3 className="text-sm font-medium text-neutral-500 uppercase tracking-wider mb-4">
+                      Logro más impresionante
+                    </h3>
+                    <p className="text-neutral-600 bg-neutral-50 rounded-lg p-4">{selectedApp.impressive_achievement}</p>
+                  </section>
+                )}
 
                 {/* Diagnostic */}
                 <section>

@@ -18,6 +18,8 @@ interface FormData {
   phone: string
   university: string
   portfolio_link: string
+  resume_url: string
+  impressive_achievement: string
   diagnostic_whats_working: string
   diagnostic_improvements: string
   diagnostic_missed_opportunity: string
@@ -33,6 +35,8 @@ const initialFormData: FormData = {
   phone: '',
   university: '',
   portfolio_link: '',
+  resume_url: '',
+  impressive_achievement: '',
   diagnostic_whats_working: '',
   diagnostic_improvements: '',
   diagnostic_missed_opportunity: '',
@@ -74,6 +78,7 @@ export default function Home() {
         }
         if (!formData.phone.trim()) newErrors.phone = 'El teléfono es requerido'
         if (!formData.university) newErrors.university = 'Selecciona tu universidad'
+        if (!formData.impressive_achievement.trim()) newErrors.impressive_achievement = 'Este campo es requerido'
         break
       case 1:
         if (!formData.diagnostic_whats_working.trim()) newErrors.diagnostic_whats_working = 'Este campo es requerido'
@@ -121,6 +126,8 @@ export default function Home() {
         phone: formData.phone,
         university: formData.university,
         portfolio_link: formData.portfolio_link || undefined,
+        resume_url: formData.resume_url || undefined,
+        impressive_achievement: formData.impressive_achievement,
         diagnostic_whats_working: formData.diagnostic_whats_working,
         diagnostic_improvements: formData.diagnostic_improvements,
         diagnostic_missed_opportunity: formData.diagnostic_missed_opportunity,

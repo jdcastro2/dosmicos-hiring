@@ -15,6 +15,8 @@ export interface CandidateApplication {
   phone: string
   university: string
   portfolio_link?: string
+  resume_url?: string
+  impressive_achievement: string
 
   // Step 2: Diagnostic
   diagnostic_whats_working: string
@@ -28,6 +30,26 @@ export interface CandidateApplication {
 
   // Step 4: Open Question
   budget_challenge: string
+}
+
+export async function uploadResume(file: File, fileName: string): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from('resumes')
+    .upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: false
+    })
+
+  if (error) {
+    console.error('Error uploading resume:', error)
+    throw error
+  }
+
+  const { data: urlData } = supabase.storage
+    .from('resumes')
+    .getPublicUrl(data.path)
+
+  return urlData.publicUrl
 }
 
 export async function submitApplication(data: CandidateApplication) {
