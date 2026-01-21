@@ -33,9 +33,16 @@ export interface CandidateApplication {
 }
 
 export async function uploadResume(file: File, fileName: string): Promise<string> {
+  // Limpiar el nombre del archivo: remover acentos, caracteres especiales y espacios
+  const cleanFileName = fileName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remover acentos
+    .replace(/[^a-zA-Z0-9._-]/g, '_') // Reemplazar caracteres especiales con guión bajo
+    .replace(/_+/g, '_') // Evitar múltiples guiones bajos seguidos
+
   const { data, error } = await supabase.storage
     .from('resumes')
-    .upload(fileName, file, {
+    .upload(cleanFileName, file, {
       cacheControl: '3600',
       upsert: false
     })
