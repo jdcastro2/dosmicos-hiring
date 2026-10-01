@@ -44,7 +44,7 @@ export default function Home() {
         id:await creativeApplicationId(formData.email),full_name:formData.full_name.trim(),email:formData.email.trim().toLowerCase(),
         resume_url:formData.resume_url,portfolio_link:formData.portfolio_link.trim() || undefined,
         impressive_achievement:formData.impressive_achievement.trim(),creative_application:creativeDetails(formData),
-        phone:'',university:'',diagnostic_whats_working:'',diagnostic_improvements:'',diagnostic_missed_opportunity:'',campaign_name:'',campaign_concept:'',campaign_executions:'',budget_challenge:''
+        phone:'',university:formData.university.trim(),diagnostic_whats_working:'',diagnostic_improvements:'',diagnostic_missed_opportunity:'',campaign_name:'',campaign_concept:'',campaign_executions:'',budget_challenge:''
       }
       await submitApplication(applicationData);setIsSuccess(true)
     } catch { setMessage('No pudimos confirmar el envío. Reintenta con el mismo correo: evitaremos duplicar tu postulación. Tus datos siguen en el formulario.') }
