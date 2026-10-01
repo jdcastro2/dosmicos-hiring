@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { jsPDF } from 'jspdf'
 import { getApplications, getResumeLink, CandidateApplication } from '@/lib/supabase'
-import { creativeSummary, isCreativeDetails } from '@/lib/creative'
+import { creativeSummary, isCreativeDetails, achievementQuestion } from '@/lib/creative'
 import { logoutAdmin, adminRequest } from '@/lib/auth'
 
 export default function AdminDashboard() {
@@ -125,8 +125,8 @@ export default function AdminDashboard() {
     addSectionTitle('Datos del candidato')
     addWrappedText(`Nombre: ${app.full_name}`, 11)
     addWrappedText(`Email: ${app.email}`, 11)
-    addWrappedText(`Teléfono: ${app.phone}`, 11)
-    addWrappedText(`Universidad: ${app.university}`, 11)
+    if (app.phone) addWrappedText(`Teléfono: ${app.phone}`, 11)
+    if (app.university) addWrappedText(`Universidad: ${app.university}`, 11)
     addWrappedText(`Portafolio: ${app.portfolio_link || 'No proporcionado'}`, 11)
     addWrappedText(`Hoja de vida: ${app.resume_url ? 'Adjunta' : 'No proporcionada'}`, 11)
     addWrappedText(`Fecha: ${app.created_at ? formatDate(app.created_at) : 'N/A'}`, 11)
@@ -134,6 +134,11 @@ export default function AdminDashboard() {
     if (isCreativeDetails(app.creative_application)) {
       addSectionTitle('Práctica creativa')
       addWrappedText(creativeSummary(app.creative_application), 10)
+      if (app.impressive_achievement) {
+        addSectionTitle('Logro más impresionante')
+        if (app.creative_application.version === 'creative-2026-brief-v2') addWrappedText(achievementQuestion, 11, true)
+        addWrappedText(app.impressive_achievement, 10)
+      }
     } else {
     // Impressive Achievement section
     if (app.impressive_achievement) {
@@ -178,7 +183,7 @@ export default function AdminDashboard() {
       'Nombre', 'Email', 'Teléfono', 'Universidad', 'Portafolio', 'Fecha',
       'Qué funciona', 'Qué mejorar', 'Oportunidad',
       'Nombre campaña', 'Concepto', 'Ejecuciones',
-      'Reto $1M', 'Hoja de vida adjunta', 'Postulación creativa'
+      'Reto $1M', 'Hoja de vida adjunta', 'Postulación creativa', 'Logro'
     ]
 
     const rows = applications.map(app => [
@@ -196,7 +201,8 @@ export default function AdminDashboard() {
       app.campaign_executions,
       app.budget_challenge,
       app.resume_url ? 'Sí' : 'No',
-      isCreativeDetails(app.creative_application) ? creativeSummary(app.creative_application) : ''
+      isCreativeDetails(app.creative_application) ? creativeSummary(app.creative_application) : '',
+      app.impressive_achievement
     ])
 
     const csvContent = [
@@ -461,6 +467,7 @@ export default function AdminDashboard() {
                   <section>
                     <h3 className="text-sm font-medium text-neutral-500 uppercase tracking-wider mb-4">Práctica creativa</h3>
                     <p className="text-neutral-600 bg-neutral-50 rounded-lg p-4 whitespace-pre-wrap break-words">{creativeSummary(selectedApp.creative_application)}</p>
+                    {selectedApp.impressive_achievement && <div className="mt-6"><h3 className="text-sm font-medium text-neutral-500 mb-3">{selectedApp.creative_application.version === 'creative-2026-brief-v2' ? achievementQuestion : 'Logro más impresionante'}</h3><p className="text-neutral-600 bg-neutral-50 rounded-lg p-4 whitespace-pre-wrap break-words">{selectedApp.impressive_achievement}</p></div>}
                   </section>
                 ) : <>
                 {/* Impressive Achievement */}

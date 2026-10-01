@@ -1,31 +1,33 @@
-# Prácticas creativas Dosmicos
+# Primer contacto para prácticas creativas Dosmicos
 
-Base: main bc3b40a653e27fa1f6cd287b03b7bef31e492ce5, posterior al arreglo de privacidad de PR #2. Este cambio está separado y requiere aprobación antes de migración/merge/producción.
+Base: main bc3b40a653e27fa1f6cd287b03b7bef31e492ce5, posterior al arreglo de privacidad. PR #3 permanece borrador; migración/merge/producción requieren aprobación de esta versión.
 
-## Formulario y compatibilidad
+## Formulario breve
 
-Tres pasos: perfil/datos/universidad/programa; habilitación/inicio/presencialidad/horario académico; CV o portafolio y dos trabajos existentes con aporte personal. Ambos perfiles se distinguen sin prueba adicional inicial. Introducción aprobada y aspiración de expansión global; dos cupos totales, Bogotá presencial, COP 2.000.000 recibidos por persona más costos de empresa aparte, ingreso noviembre 2026–enero 2027, lunes a viernes 08:00–17:00 sujeto a compatibilidad académica y descansos, líder Julián Castro, duración según universidad. Sin modalidad contractual inventada ni plazo prometido de respuesta. Se retiran del formulario y sus metadatos el diagnóstico Instagram, campaña mayo–agosto y reto de ventas; los datos históricos permanecen en el panel.
+Una página con seis campos: Nombre completo; Correo electrónico; Perfil al que te postulas; Hoja de vida — PDF o Word, máximo 5 MB; ¿Qué es lo más impresionante que has construido, organizado o logrado FUERA de la universidad y de las notas académicas?; Link a tu portafolio (opcional).
 
-Carga existente resumes, PDF/Word hasta 5 MB, nombre UUID sin datos personales, upsert=false. Cliente de postulación siempre anon; INSERT sin SELECT. El panel y las exportaciones siguen exigiendo sesión e identidad aprobada; CV mediante firma de 60 segundos. Las API, Auth, políticas, grants, otros buckets y el lockfile no cambian en esta propuesta. JSON inválido de terceros no rompe la vista administrativa.
+Nombre/correo/perfil/CV/logro obligatorios; portafolio opcional. Se retiran del primer contacto teléfono, universidad/programa, habilitación, fecha/presencialidad/compatibilidad horaria y los dos trabajos/aportes. Disponibilidad y requisitos universitarios se revisan después del primer filtro. No existe necesidad técnica/legal identificada de pedir esos campos ahora. Las columnas históricas phone/university se conservan y reciben cadenas vacías para cumplir el esquema existente sin preguntar ni inventar datos.
 
-El ID primario estable por correo normalizado y campaña evita doble clic, reintentos inciertos y duplicados tras recargar sin leer ni sobrescribir registros. Una segunda postulación con el mismo correo en esta campaña conserva la primera; no sirve para editarla. No se afirma verificación de propiedad del correo.
+Condiciones públicas preservadas: introducción aprobada, aspiración global, dos cupos totales, Bogotá presencial, COP 2.000.000 mensuales recibidos por persona más costos de empresa aparte, ingreso noviembre 2026–enero 2027, lunes a viernes 08:00–17:00 sujeto compatibilidad académica y descansos, líder Julián Castro, duración según universidad. No se detalla almuerzo ni se inventa contratación. No vuelven pruebas antiguas, cifras no comprobadas ni plazos de respuesta.
 
-## Validación aislada
+## Datos y seguridad
 
-Build con Next 15.5.27 y React 19.3.0, tipos y lint. Validaciones unitarias: ambos perfiles, límites/fechas inválidas, URLs inseguras, identidad estable y datos JSON incompletos. Flujo en Chromium escritorio 1440×1000, Chromium móvil 390×844 y WebKit móvil 375×812: campos requeridos, CV o portafolio, tipo/tamaño/carga de CV, retroceso con datos conservados, errores de red, reintento, doble clic y duplicado normalizado tras recarga, sin desbordamiento horizontal. Regresión de seguridad: cinco clases de acceso rechazadas antes de leer/firmar; admin simulado y CV privado, PDF/CSV con candidatos creativos e históricos, revocación, logout y formulario anon aun con sesión admin. Solo fixtures locales y Supabase simulado; destinos externos del navegador bloqueados y cero candidaturas de producción.
+El logro se guarda en impressive_achievement existente. creative_application JSONB solo guarda versión creative-2026-brief-v2 y perfil. El panel/modal/PDF/CSV muestran el logro y mantienen datos de postulaciones históricas y del formato creativo v1. Ningún registro previo se modifica. Se mantiene identidad por correo normalizado/campaña para doble clic, reintentos y duplicados; la segunda postulación conserva la primera, no la edita.
 
-Evidencias locales en evidence/, excluidas del PR: build.log, test-results.json, security-test-results.json y capturas desktop-chromium-intro.png/mobile-webkit-works.png. Los avisos de consola 401 de pruebas son rechazos esperados; WebKit hizo fallback de navegación RSC local y completó la suite sin pageerror. El warning informativo Browserslist no impidió build. El login real del administrador y apertura de CV reales quedan fuera de estas pruebas.
+CV: almacenamiento resumes existente, nombre UUID, upsert=false. Cliente público anon incluso con sesión administrativa; INSERT sin SELECT. Auth, API admin, identidad aprobada, firma CV 60s, revalidación exportación y políticas/grants de privacidad se conservan. No cambios a credenciales, otros buckets, servicios, dependencias o Sewdle.
 
-## Preview
+## Validación
 
-La rama generará preview con la integración Vercel existente. Inspeccionar solo interfaz con SSO normal. Sus variables pueden apuntar al Supabase real: no enviar postulación ni subir CV ficticios allí. La columna nueva todavía no está aplicada; probar envíos solo en localhost con mock hasta aprobación de publicación. No crear bypass ni nuevos servicios.
+Build/tipos/lint y unitarias. Flujo breve en Chromium escritorio/móvil y WebKit móvil con Supabase interceptado: seis campos y pregunta exacta, ausencia de requisitos retirados, CV obligatorio/portafolio opcional, tipo/tamaño/carga, URLs inseguras, error y reintento, doble clic y duplicado tras recarga. Regresión de seguridad: acceso rechazado antes de datos, panel/exportación de formato breve e históricos/v1, CV privado, revocación, logout y formulario anon con sesión admin. Fixtures locales; cero candidaturas/archivos de producción. Evidencia local en evidence/, fuera del PR. Login real y CV reales siguen fuera de estas pruebas.
 
-## Orden exacto para publicar después de aprobación
+## Preview y publicación pendiente
 
-1. Revisar el head final del PR y sus checks, confirmando que conserva el arreglo de seguridad.
-2. En el proyecto Supabase existente ysdcsqsfnckeuafjyrbc, verificar metadatos de creative_application: ausente o JSONB. Aplicar únicamente migrations/20261001_creative_application.sql: transacción aditiva, sin tocar datos ni permisos. No ejecutar supabase-schema.sql ni repetir la migración de privacidad.
-3. Confirmar columna JSONB nullable, sin default; conteos y permisos/RLS/Storage de privacidad sin cambios. El formulario antiguo continúa compatible durante este paso.
-4. Integrar el PR creativo en main, lo que dispara el despliegue automático de Vercel. Verificar producción READY para el SHA integrado y alias hiring.dosmicos.com.
-5. Revisar formulario/móvil/retroceso sin enviar candidatura falsa; API admin sin sesión 401/private,no-store; acceso administrativo con sesión existente solo si autorizado. No extraer candidatos para esta revisión.
+Preview Vercel solo para revisar interfaz con SSO normal. Puede compartir Supabase real: no enviar ni subir datos ficticios allí. La columna JSONB aún no se aplica; envíos se prueban únicamente en localhost con mock.
 
-Si falla SQL antes de COMMIT: ROLLBACK y detener. Si falla despliegue, conservar columna aditiva y código de seguridad anterior; no revertir privacidad, eliminar la columna ni borrar postulaciones. No se aplicó migración ni se integró/publicó este formulario.
+Después de aprobar esta versión:
+1. Revisar head/checks finales del PR #3.
+2. Verificar en Supabase ysdcsqsfnckeuafjyrbc que creative_application está ausente o ya es JSONB. Aplicar únicamente migrations/20261001_creative_application.sql y verificar columna JSONB nullable, sin default, sin cambios de datos/permisos/RLS/Storage. El cliente de seguridad actual sigue compatible.
+3. Integrar PR #3 en main para activar Vercel. Verificar production READY para SHA integrado y alias hiring.dosmicos.com.
+4. Revisar interfaz/móvil sin candidaturas ficticias; API sin sesión 401/private,no-store. Verificar login app administrativo con sesión existente solo dentro del alcance aprobado.
+
+No repetir migración de privacidad ni ejecutar supabase-schema.sql. Error SQL antes de COMMIT: ROLLBACK y detener. Fallo de despliegue: conservar columna aditiva y código de seguridad previo; no revertir privacidad ni eliminar datos/columna. Esta preparación no aplica migración ni integra/publica formulario.
