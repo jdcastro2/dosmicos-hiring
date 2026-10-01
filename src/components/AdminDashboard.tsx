@@ -4,14 +4,16 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { jsPDF } from 'jspdf'
-import { getApplications, CandidateApplication } from '@/lib/supabase'
-import { removeAuthToken } from '@/lib/auth'
+import { getApplications, getResumeLink, CandidateApplication } from '@/lib/supabase'
+import { logoutAdmin, adminRequest } from '@/lib/auth'
 
 export default function AdminDashboard() {
   const [applications, setApplications] = useState<CandidateApplication[]>([])
   const [selectedApp, setSelectedApp] = useState<CandidateApplication | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [loadError, setLoadError] = useState('')
+  const [openingCV, setOpeningCV] = useState(false)
 
   useEffect(() => {
     loadApplications()
@@ -22,15 +24,32 @@ export default function AdminDashboard() {
       const data = await getApplications()
       setApplications(data)
     } catch (error) {
-      console.error('Error loading applications:', error)
+      setLoadError(error instanceof Error ? error.message : 'No se pudieron cargar las postulaciones')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleLogout = () => {
-    removeAuthToken()
+  const handleLogout = async () => {
+    setApplications([])
+    setSelectedApp(null)
+    await logoutAdmin()
     window.location.reload()
+  }
+
+  const openResume = async (app: CandidateApplication) => {
+    if (!app.id || openingCV) return
+    const tab = window.open('about:blank', '_blank')
+    if (tab) tab.opener = null
+    setOpeningCV(true)
+    try {
+      const url = await getResumeLink(app.id)
+      if (tab) tab.location.replace(url)
+      else throw new Error('Permite abrir una pestaña para ver el CV')
+    } catch (failure) {
+      tab?.close()
+      setLoadError(failure instanceof Error ? failure.message : 'No se pudo abrir el CV')
+    } finally { setOpeningCV(false) }
   }
 
   const filteredApplications = applications.filter(app =>
@@ -49,7 +68,8 @@ export default function AdminDashboard() {
     })
   }
 
-  const generatePDF = (app: CandidateApplication) => {
+  const generatePDF = async (app: CandidateApplication) => {
+    try { await adminRequest('/api/admin/session') } catch { setLoadError('Inicia sesión nuevamente para exportar'); return }
     const doc = new jsPDF()
     const pageWidth = doc.internal.pageSize.getWidth()
     const margin = 20
@@ -145,7 +165,8 @@ export default function AdminDashboard() {
     doc.save(`aplicacion_${app.full_name.replace(/\s+/g, '_')}.pdf`)
   }
 
-  const exportAllToCSV = () => {
+  const exportAllToCSV = async () => {
+    try { await adminRequest('/api/admin/session') } catch { setLoadError('Inicia sesión nuevamente para exportar'); return }
     const headers = [
       'Nombre', 'Email', 'Teléfono', 'Universidad', 'Portafolio', 'Fecha',
       'Qué funciona', 'Qué mejorar', 'Oportunidad',
@@ -160,18 +181,18 @@ export default function AdminDashboard() {
       app.university,
       app.portfolio_link || '',
       app.created_at ? formatDate(app.created_at) : '',
-      app.diagnostic_whats_working.replace(/"/g, '""'),
-      app.diagnostic_improvements.replace(/"/g, '""'),
-      app.diagnostic_missed_opportunity.replace(/"/g, '""'),
-      app.campaign_name.replace(/"/g, '""'),
-      app.campaign_concept.replace(/"/g, '""'),
-      app.campaign_executions.replace(/"/g, '""'),
-      app.budget_challenge.replace(/"/g, '""')
+      app.diagnostic_whats_working,
+      app.diagnostic_improvements,
+      app.diagnostic_missed_opportunity,
+      app.campaign_name,
+      app.campaign_concept,
+      app.campaign_executions,
+      app.budget_challenge
     ])
 
     const csvContent = [
       headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ...rows.map(row => row.map(cell => { const value = String(cell ?? ''); const safe = /^[=+@\t\r\n-]/.test(value) ? `'${value}` : value; return `"${safe.replace(/"/g, '""')}"` }).join(','))
     ].join('\n')
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' })
@@ -187,6 +208,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
+      {loadError && <p role="alert" className="m-6 rounded-lg bg-red-50 p-4 text-red-700">{loadError}</p>}
       {/* Header */}
       <header className="bg-white border-b border-neutral-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -410,17 +432,17 @@ export default function AdminDashboard() {
                     {selectedApp.resume_url && (
                       <div className="col-span-2">
                         <p className="text-sm text-neutral-500">Hoja de vida</p>
-                        <a
-                          href={selectedApp.resume_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          type="button"
+                          disabled={openingCV}
+                          onClick={() => openResume(selectedApp)}
                           className="text-blue-600 hover:underline flex items-center gap-1"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
-                          Descargar CV
-                        </a>
+                          {openingCV ? 'Abriendo…' : 'Abrir CV privado'}
+                        </button>
                       </div>
                     )}
                   </div>

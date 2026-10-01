@@ -4,6 +4,8 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// El formulario público siempre opera como anon, incluso con una sesión admin abierta.
+const publicFormClient = createClient(supabaseUrl, supabaseAnonKey, { auth: { storageKey: 'hiring-public-form', persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } })
 
 export interface CandidateApplication {
   id?: string
@@ -40,7 +42,7 @@ export async function uploadResume(file: File, fileName: string): Promise<string
     .replace(/[^a-zA-Z0-9._-]/g, '_') // Reemplazar caracteres especiales con guión bajo
     .replace(/_+/g, '_') // Evitar múltiples guiones bajos seguidos
 
-  const { data, error } = await supabase.storage
+  const { data, error } = await publicFormClient.storage
     .from('resumes')
     .upload(cleanFileName, file, {
       cacheControl: '3600',
@@ -52,7 +54,7 @@ export async function uploadResume(file: File, fileName: string): Promise<string
     throw error
   }
 
-  const { data: urlData } = supabase.storage
+  const { data: urlData } = publicFormClient.storage
     .from('resumes')
     .getPublicUrl(data.path)
 
@@ -60,10 +62,10 @@ export async function uploadResume(file: File, fileName: string): Promise<string
 }
 
 export async function submitApplication(data: CandidateApplication) {
-  const { data: result, error } = await supabase
+  const { data: result, error } = await publicFormClient
     .from('applications')
     .insert([data])
-    .select()
+
 
   if (error) {
     console.error('Error submitting application:', error)
@@ -74,30 +76,14 @@ export async function submitApplication(data: CandidateApplication) {
 }
 
 export async function getApplications(): Promise<CandidateApplication[]> {
-  const { data, error } = await supabase
-    .from('applications')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    console.error('Error fetching applications:', error)
-    throw error
-  }
-
-  return data || []
+  const { adminRequest } = await import('./auth')
+  return adminRequest<CandidateApplication[]>('/api/admin/applications')
 }
-
 export async function getApplicationById(id: string): Promise<CandidateApplication | null> {
-  const { data, error } = await supabase
-    .from('applications')
-    .select('*')
-    .eq('id', id)
-    .single()
-
-  if (error) {
-    console.error('Error fetching application:', error)
-    return null
-  }
-
-  return data
+  return (await getApplications()).find(app => app.id === id) || null
+}
+export async function getResumeLink(id: string): Promise<string> {
+  const { adminRequest } = await import('./auth')
+  const result = await adminRequest<{ url: string }>(`/api/admin/applications/${encodeURIComponent(id)}/resume`)
+  return result.url
 }
