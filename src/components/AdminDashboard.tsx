@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { jsPDF } from 'jspdf'
 import { getApplications, getResumeLink, CandidateApplication } from '@/lib/supabase'
+import { creativeSummary, isCreativeDetails } from '@/lib/creative'
 import { logoutAdmin, adminRequest } from '@/lib/auth'
 
 export default function AdminDashboard() {
@@ -130,6 +131,10 @@ export default function AdminDashboard() {
     addWrappedText(`Hoja de vida: ${app.resume_url ? 'Adjunta' : 'No proporcionada'}`, 11)
     addWrappedText(`Fecha: ${app.created_at ? formatDate(app.created_at) : 'N/A'}`, 11)
 
+    if (isCreativeDetails(app.creative_application)) {
+      addSectionTitle('Práctica creativa')
+      addWrappedText(creativeSummary(app.creative_application), 10)
+    } else {
     // Impressive Achievement section
     if (app.impressive_achievement) {
       addSectionTitle('Logro más impresionante')
@@ -161,6 +166,8 @@ export default function AdminDashboard() {
     addSectionTitle('Reto Final ($1M + 48h)')
     addWrappedText(app.budget_challenge, 10)
 
+    }
+
     // Save the PDF
     doc.save(`aplicacion_${app.full_name.replace(/\s+/g, '_')}.pdf`)
   }
@@ -171,7 +178,7 @@ export default function AdminDashboard() {
       'Nombre', 'Email', 'Teléfono', 'Universidad', 'Portafolio', 'Fecha',
       'Qué funciona', 'Qué mejorar', 'Oportunidad',
       'Nombre campaña', 'Concepto', 'Ejecuciones',
-      'Reto $1M'
+      'Reto $1M', 'Hoja de vida adjunta', 'Postulación creativa'
     ]
 
     const rows = applications.map(app => [
@@ -187,7 +194,9 @@ export default function AdminDashboard() {
       app.campaign_name,
       app.campaign_concept,
       app.campaign_executions,
-      app.budget_challenge
+      app.budget_challenge,
+      app.resume_url ? 'Sí' : 'No',
+      isCreativeDetails(app.creative_application) ? creativeSummary(app.creative_application) : ''
     ])
 
     const csvContent = [
@@ -304,7 +313,7 @@ export default function AdminDashboard() {
                     Universidad
                   </th>
                   <th className="text-left text-xs font-medium text-neutral-500 uppercase tracking-wider px-6 py-4 hidden md:table-cell">
-                    Campaña
+                    Perfil / campaña histórica
                   </th>
                   <th className="text-left text-xs font-medium text-neutral-500 uppercase tracking-wider px-6 py-4 hidden sm:table-cell">
                     Fecha
@@ -327,7 +336,7 @@ export default function AdminDashboard() {
                       {app.university}
                     </td>
                     <td className="px-6 py-4 text-sm text-neutral-600 hidden md:table-cell">
-                      {app.campaign_name}
+                      {isCreativeDetails(app.creative_application) ? app.creative_application.profile : app.campaign_name}
                     </td>
                     <td className="px-6 py-4 text-sm text-neutral-500 hidden sm:table-cell">
                       {app.created_at ? formatDate(app.created_at) : 'N/A'}
@@ -448,6 +457,12 @@ export default function AdminDashboard() {
                   </div>
                 </section>
 
+                {isCreativeDetails(selectedApp.creative_application) ? (
+                  <section>
+                    <h3 className="text-sm font-medium text-neutral-500 uppercase tracking-wider mb-4">Práctica creativa</h3>
+                    <p className="text-neutral-600 bg-neutral-50 rounded-lg p-4 whitespace-pre-wrap break-words">{creativeSummary(selectedApp.creative_application)}</p>
+                  </section>
+                ) : <>
                 {/* Impressive Achievement */}
                 {selectedApp.impressive_achievement && (
                   <section>
@@ -507,6 +522,7 @@ export default function AdminDashboard() {
                   </h3>
                   <p className="text-neutral-600 bg-neutral-50 rounded-lg p-4 whitespace-pre-wrap">{selectedApp.budget_challenge}</p>
                 </section>
+                </>}
               </div>
             </motion.div>
           </motion.div>

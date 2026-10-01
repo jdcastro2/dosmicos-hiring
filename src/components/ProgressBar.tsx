@@ -7,7 +7,7 @@ interface ProgressBarProps {
   totalSteps: number
 }
 
-const stepNames = ['Datos', 'Diagnóstico', 'Campaña', 'Reto']
+const stepNames = ['Perfil', 'Disponibilidad', 'Trabajos']
 
 export default function ProgressBar({ currentStep, totalSteps }: ProgressBarProps) {
   return (

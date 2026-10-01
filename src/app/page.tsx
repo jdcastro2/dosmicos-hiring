@@ -1,61 +1,46 @@
 'use client'
 
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import Image from 'next/image'
 import ProgressBar from '@/components/ProgressBar'
-import FormStep1 from '@/components/FormStep1'
-import FormStep2 from '@/components/FormStep2'
-import FormStep3 from '@/components/FormStep3'
-import FormStep4 from '@/components/FormStep4'
 import SuccessScreen from '@/components/SuccessScreen'
-import StatsDisplay from '@/components/StatsDisplay'
-import { submitApplication, CandidateApplication } from '@/lib/supabase'
-
-interface FormData {
-  full_name: string
-  email: string
-  phone: string
-  university: string
-  portfolio_link: string
-  resume_url: string
-  impressive_achievement: string
-  diagnostic_whats_working: string
-  diagnostic_improvements: string
-  diagnostic_missed_opportunity: string
-  campaign_name: string
-  campaign_concept: string
-  campaign_executions: string
-  budget_challenge: string
-}
-
-const initialFormData: FormData = {
-  full_name: '',
-  email: '',
-  phone: '',
-  university: '',
-  portfolio_link: '',
-  resume_url: '',
-  impressive_achievement: '',
-  diagnostic_whats_working: '',
-  diagnostic_improvements: '',
-  diagnostic_missed_opportunity: '',
-  campaign_name: '',
-  campaign_concept: '',
-  campaign_executions: '',
-  budget_challenge: '',
-}
+import CreativeFields from '@/components/CreativeFields'
+import { CreativeForm, emptyCreativeForm, validateCreativeStep, creativeDetails, creativeApplicationId } from '@/lib/creative'
+import { submitApplication, uploadResume, CandidateApplication } from '@/lib/supabase'
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState(0)
-  const [formData, setFormData] = useState<FormData>(initialFormData)
+  const [formData, setFormData] = useState<CreativeForm>(emptyCreativeForm)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
-  const totalSteps = 4
+  const totalSteps = 3
+  const submitting = useRef(false)
+  const uploading = useRef(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [fileName, setFileName] = useState('')
+  const [message, setMessage] = useState('')
+  const formRef = useRef<HTMLDivElement>(null)
+  const showErrors = (nextErrors: Record<string, string>) => {
+    setErrors(nextErrors)
+    requestAnimationFrame(() => document.getElementById(Object.keys(nextErrors)[0])?.focus())
+  }
+  const handleUpload = async (file: File) => {
+    if (uploading.current || submitting.current) return
+    if (file.size > 5 * 1024 * 1024 || !['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(file.type)) {
+      setMessage('Selecciona un archivo PDF o Word de máximo 5 MB.'); return
+    }
+    uploading.current = true; setIsUploading(true); setMessage('')
+    try {
+      const url = await uploadResume(file, `${crypto.randomUUID()}.${file.name.split('.').pop()}`)
+      updateFormData({resume_url: url}); setFileName(file.name)
+    } catch { setMessage('No se pudo subir el archivo. Puedes reintentar o compartir tu portafolio.') }
+    finally { uploading.current = false; setIsUploading(false) }
+  }
 
-  const updateFormData = (data: Partial<FormData>) => {
+  const updateFormData = (data: Partial<CreativeForm>) => {
     setFormData((prev) => ({ ...prev, ...data }))
     const updatedFields = Object.keys(data)
     setErrors((prev) => {
@@ -66,43 +51,18 @@ export default function Home() {
   }
 
   const validateStep = (step: number): boolean => {
-    const newErrors: Record<string, string> = {}
-
-    switch (step) {
-      case 0:
-        if (!formData.full_name.trim()) newErrors.full_name = 'El nombre es requerido'
-        if (!formData.email.trim()) {
-          newErrors.email = 'El correo es requerido'
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-          newErrors.email = 'Ingresa un correo válido'
-        }
-        if (!formData.phone.trim()) newErrors.phone = 'El teléfono es requerido'
-        if (!formData.university) newErrors.university = 'Selecciona tu universidad'
-        if (!formData.impressive_achievement.trim()) newErrors.impressive_achievement = 'Este campo es requerido'
-        break
-      case 1:
-        if (!formData.diagnostic_whats_working.trim()) newErrors.diagnostic_whats_working = 'Este campo es requerido'
-        if (!formData.diagnostic_improvements.trim()) newErrors.diagnostic_improvements = 'Este campo es requerido'
-        if (!formData.diagnostic_missed_opportunity.trim()) newErrors.diagnostic_missed_opportunity = 'Este campo es requerido'
-        break
-      case 2:
-        if (!formData.campaign_name.trim()) newErrors.campaign_name = 'El nombre de la campaña es requerido'
-        if (!formData.campaign_concept.trim()) newErrors.campaign_concept = 'El concepto es requerido'
-        if (!formData.campaign_executions.trim()) newErrors.campaign_executions = 'Las ejecuciones son requeridas'
-        break
-      case 3:
-        if (!formData.budget_challenge.trim()) newErrors.budget_challenge = 'Tu respuesta es requerida'
-        break
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    const nextErrors = validateCreativeStep(formData, step)
+    showErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
   }
 
   const handleNext = () => {
+    if (submitting.current || uploading.current) return
+    setMessage('')
     if (validateStep(currentStep)) {
       if (currentStep < totalSteps - 1) {
         setCurrentStep((prev) => prev + 1)
+        formRef.current?.scrollIntoView({behavior: 'smooth'})
       } else {
         handleSubmit()
       }
@@ -110,40 +70,36 @@ export default function Home() {
   }
 
   const handleBack = () => {
+    if (submitting.current || uploading.current) return
+    setErrors({}); setMessage('')
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1)
     }
   }
 
   const handleSubmit = async () => {
-    if (!validateStep(currentStep)) return
-
-    setIsSubmitting(true)
+    if (submitting.current || uploading.current) return
+    for (let step = 0; step < totalSteps; step++) {
+      const nextErrors = validateCreativeStep(formData, step)
+      if (Object.keys(nextErrors).length) { setCurrentStep(step); showErrors(nextErrors); return }
+    }
+    submitting.current = true
+    setIsSubmitting(true); setMessage('')
     try {
       const applicationData: CandidateApplication = {
-        full_name: formData.full_name,
-        email: formData.email,
-        phone: formData.phone,
-        university: formData.university,
-        portfolio_link: formData.portfolio_link || undefined,
-        resume_url: formData.resume_url || undefined,
-        impressive_achievement: formData.impressive_achievement,
-        diagnostic_whats_working: formData.diagnostic_whats_working,
-        diagnostic_improvements: formData.diagnostic_improvements,
-        diagnostic_missed_opportunity: formData.diagnostic_missed_opportunity,
-        campaign_name: formData.campaign_name,
-        campaign_concept: formData.campaign_concept,
-        campaign_executions: formData.campaign_executions,
-        budget_challenge: formData.budget_challenge,
+        id: await creativeApplicationId(formData.email),
+        full_name: formData.full_name.trim(), email: formData.email.trim().toLowerCase(), phone: formData.phone.trim(), university: formData.university.trim(),
+        portfolio_link: formData.portfolio_link.trim() || undefined, resume_url: formData.resume_url || undefined,
+        creative_application: creativeDetails(formData),
+        impressive_achievement: '', diagnostic_whats_working: '', diagnostic_improvements: '', diagnostic_missed_opportunity: '',
+        campaign_name: '', campaign_concept: '', campaign_executions: '', budget_challenge: '',
       }
-
       await submitApplication(applicationData)
       setIsSuccess(true)
-    } catch (error) {
-      console.error('Error submitting application:', error)
-      alert('Hubo un error al enviar tu aplicación. Por favor intenta de nuevo.')
+    } catch {
+      setMessage('No pudimos confirmar el envío. Reintenta con el mismo correo: evitaremos duplicar tu postulación. Tus datos siguen en el formulario.')
     } finally {
-      setIsSubmitting(false)
+      submitting.current = false; setIsSubmitting(false)
     }
   }
 
@@ -172,16 +128,25 @@ export default function Home() {
             />
 
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold text-neutral-900 tracking-tight mb-6">
-              Únete al equipo
+              Prácticas creativas
             </h1>
 
             <p className="text-lg md:text-xl text-neutral-500 max-w-2xl mx-auto font-light">
-              Buscamos mentes creativas para el equipo de marketing de la marca de ropa infantil de más rápido crecimiento en Colombia.
+              Dosmicos es una marca colombiana de ropa infantil que combina diseño, personajes e historias con IA y tecnología. Estamos creciendo mucho y buscamos talento creativo que quiera crecer con nosotros
             </p>
           </motion.div>
 
           {/* Stats */}
-          <StatsDisplay />
+          <div className="max-w-2xl mx-auto mt-8 text-neutral-600 space-y-4 text-center">
+            <p>Nuestra aspiración: llevar Dosmicos al mundo con una expansión global.</p>
+            <div className="bg-neutral-50 rounded-2xl p-6 text-left space-y-3 text-sm">
+              <p><strong>Dos cupos totales:</strong> realización / edición audiovisual y guion / comunicación digital.</p>
+              <p><strong>Presencial en Bogotá.</strong> COP 2.000.000 mensuales recibidos por persona; los costos de empresa van aparte.</p>
+              <p><strong>Ingreso:</strong> noviembre de 2026–enero de 2027.</p>
+              <p><strong>Horario:</strong> lunes a viernes, 08:00–17:00, sujeto a compatibilidad académica y descansos.</p>
+              <p><strong>Líder directo:</strong> Julián Castro. La duración se acuerda según la universidad.</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -194,27 +159,16 @@ export default function Home() {
         >
           <ProgressBar currentStep={currentStep} totalSteps={totalSteps} />
 
-          <div className="mt-12">
-            <AnimatePresence mode="wait">
-              {currentStep === 0 && (
-                <FormStep1 key="step1" formData={formData} updateFormData={updateFormData} errors={errors} />
-              )}
-              {currentStep === 1 && (
-                <FormStep2 key="step2" formData={formData} updateFormData={updateFormData} errors={errors} />
-              )}
-              {currentStep === 2 && (
-                <FormStep3 key="step3" formData={formData} updateFormData={updateFormData} errors={errors} />
-              )}
-              {currentStep === 3 && (
-                <FormStep4 key="step4" formData={formData} updateFormData={updateFormData} errors={errors} />
-              )}
-            </AnimatePresence>
+          <div ref={formRef} className="mt-12">
+            <CreativeFields data={formData} update={updateFormData} errors={errors} step={currentStep} upload={handleUpload} uploading={isUploading} fileName={fileName}/>
+            {message && <p role="alert" className="mt-6 text-red-700">{message}</p>}
           </div>
 
           {/* Navigation */}
           <div className="flex justify-between items-center mt-12 pt-8 border-t border-neutral-100">
             <button
               onClick={handleBack}
+              disabled={currentStep === 0 || isSubmitting || isUploading}
               className={`flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-full transition-all
                 ${currentStep === 0
                   ? 'opacity-0 pointer-events-none'
@@ -229,7 +183,7 @@ export default function Home() {
 
             <button
               onClick={handleNext}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploading}
               className="flex items-center gap-2 px-8 py-3 bg-neutral-900 text-white text-sm font-medium rounded-full
                 hover:bg-neutral-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -240,7 +194,7 @@ export default function Home() {
                 </>
               ) : currentStep === totalSteps - 1 ? (
                 <>
-                  Enviar aplicación
+                  Enviar postulación
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
                   </svg>
