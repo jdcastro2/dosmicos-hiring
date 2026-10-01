@@ -113,7 +113,7 @@ export default function FormStep1({ formData, updateFormData, errors }: FormStep
 
     setIsUploading(true)
     try {
-      const uniqueName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`
+      const uniqueName = `${crypto.randomUUID()}.${file.name.split('.').pop()?.toLowerCase() || 'pdf'}`
       const url = await uploadResume(file, uniqueName)
       updateFormData({ resume_url: url })
       setFileName(file.name)

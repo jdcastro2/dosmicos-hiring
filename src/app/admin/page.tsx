@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { validateAdmin, setAuthToken, isAuthenticated } from '@/lib/auth'
+import Link from 'next/link'
+import { loginAdmin, isAuthenticated } from '@/lib/auth'
+import { supabase } from '@/lib/supabase'
+import { isHiringAdmin } from '@/lib/admin-access'
 import AdminDashboard from '@/components/AdminDashboard'
 
 export default function AdminPage() {
@@ -12,22 +15,30 @@ export default function AdminPage() {
   const [error, setError] = useState('')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [isSigningIn, setIsSigningIn] = useState(false)
 
   useEffect(() => {
-    setIsLoggedIn(isAuthenticated())
-    setIsLoading(false)
+    isAuthenticated().then(setIsLoggedIn).catch(() => setIsLoggedIn(false)).finally(() => setIsLoading(false))
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isHiringAdmin(session?.user || null)) setIsLoggedIn(false)
+    })
+    return () => data.subscription.unsubscribe()
   }, [])
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
-    if (validateAdmin(email, password)) {
-      setAuthToken('dosmicos_admin_authenticated')
+    if (isSigningIn) return
+    setIsSigningIn(true)
+    try {
+      await loginAdmin(email, password)
+      setPassword('')
       setIsLoggedIn(true)
-    } else {
-      setError('Credenciales incorrectas')
-    }
+    } catch (failure) {
+      setPassword('')
+      setError(failure instanceof Error ? failure.message : 'No se pudo iniciar sesión')
+    } finally { setIsSigningIn(false) }
   }
 
   if (isLoading) {
@@ -61,15 +72,16 @@ export default function AdminPage() {
           <h1 className="text-2xl font-semibold text-neutral-900">
             Panel de Administración
           </h1>
-          <p className="text-neutral-500 mt-2">Ingresa tus credenciales</p>
+          <p className="text-neutral-500 mt-2">Ingresa con tu cuenta de Supabase</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label htmlFor="admin-email" className="block text-sm font-medium text-neutral-700 mb-2">
               Correo electrónico
             </label>
             <input
+              id="admin-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -81,10 +93,11 @@ export default function AdminPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label htmlFor="admin-password" className="block text-sm font-medium text-neutral-700 mb-2">
               Contraseña
             </label>
             <input
+              id="admin-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -107,17 +120,18 @@ export default function AdminPage() {
 
           <button
             type="submit"
+            disabled={isSigningIn}
             className="w-full py-3 bg-neutral-900 text-white font-medium rounded-lg
               hover:bg-neutral-800 transition-all"
           >
-            Iniciar sesión
+            {isSigningIn ? 'Iniciando sesión…' : 'Iniciar sesión'}
           </button>
         </form>
 
         <p className="text-center text-sm text-neutral-400 mt-6">
-          <a href="/" className="hover:text-neutral-600 transition-colors">
+          <Link href="/" className="hover:text-neutral-600 transition-colors">
             ← Volver al inicio
-          </a>
+          </Link>
         </p>
       </motion.div>
     </div>
