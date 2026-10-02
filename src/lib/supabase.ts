@@ -1,3 +1,4 @@
+import type { CreativeDetails } from './creative'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -8,6 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 const publicFormClient = createClient(supabaseUrl, supabaseAnonKey, { auth: { storageKey: 'hiring-public-form', persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } })
 
 export interface CandidateApplication {
+  creative_application?: CreativeDetails
   id?: string
   created_at?: string
 
@@ -66,6 +68,8 @@ export async function submitApplication(data: CandidateApplication) {
     .from('applications')
     .insert([data])
 
+
+  if (error?.code === '23505' && data.creative_application && /applications_pkey/.test(error.message)) return null
 
   if (error) {
     console.error('Error submitting application:', error)

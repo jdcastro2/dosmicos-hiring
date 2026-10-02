@@ -50,21 +50,8 @@ export default function SuccessScreen() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          Aplicación enviada
+          Postulación recibida
         </motion.h1>
-
-        {/* Elon quote */}
-        <motion.div
-          className="mb-10"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <p className="text-xl md:text-2xl text-neutral-600 font-light italic mb-4">
-            &ldquo;When something is important enough, you do it even if the odds are not in your favor.&rdquo;
-          </p>
-          <p className="text-neutral-400 text-sm">— Elon Musk</p>
-        </motion.div>
 
         {/* Status */}
         <motion.div
@@ -75,7 +62,7 @@ export default function SuccessScreen() {
         >
           <div className="flex items-center justify-center gap-3 text-neutral-900">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-sm">Te contactaremos en 48-72 horas</span>
+            <span className="text-sm">Gracias por compartir tu trabajo. Revisaremos tu perfil.</span>
           </div>
         </motion.div>
 

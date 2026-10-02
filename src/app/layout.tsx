@@ -3,11 +3,11 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Únete al equipo | Dosmicos',
-  description: 'Prueba creativa para prácticas de marketing en Dosmicos - la marca colombiana de ropa para niños de más rápido crecimiento.',
+  description: 'Prácticas creativas en Dosmicos: audiovisual y comunicación digital. Presencial en Bogotá.',
   keywords: ['dosmicos', 'prácticas', 'marketing', 'colombia', 'ropa infantil', 'empleo'],
   openGraph: {
-    title: 'Únete al equipo de Marketing | Dosmicos',
-    description: 'Prueba creativa para prácticas de marketing en Dosmicos',
+    title: 'Prácticas creativas | Dosmicos',
+    description: 'Postulación a prácticas creativas en Dosmicos',
     type: 'website',
   },
 }
