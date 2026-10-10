@@ -7,6 +7,13 @@ import CreativeFields from '@/components/CreativeFields'
 import { CreativeForm, emptyCreativeForm, validateCreativeForm, creativeDetails, creativeApplicationId } from '@/lib/creative'
 import { submitApplication, uploadResume, CandidateApplication } from '@/lib/supabase'
 
+const gallery = [
+  { src: '/galeria/ruana-gato-negro.jpg', alt: 'Niña con la ruana de gato negro de Dosmicos junto a un árbol' },
+  { src: '/galeria/ruana-monstruo-verde.jpg', alt: 'Niño jugando con la ruana de monstruo verde de Dosmicos' },
+  { src: '/galeria/ruana-monstruo-rosa.jpg', alt: 'Niña con la ruana de monstruo rosa de Dosmicos' },
+  { src: '/galeria/ruana-calabaza.jpg', alt: 'Niño de espaldas con la ruana de calabaza de Dosmicos' },
+]
+
 export default function Home() {
   const [formData, setFormData] = useState<CreativeForm>(emptyCreativeForm)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -76,19 +83,41 @@ export default function Home() {
             </h1>
 
             <p className="text-lg md:text-xl text-neutral-500 max-w-2xl mx-auto font-light">
-              Dosmicos es una marca colombiana de ropa infantil que combina diseño, personajes e historias con IA y tecnología. Estamos creciendo mucho y buscamos talento creativo que quiera crecer con nosotros
+              Somos Dosmicos, una marca colombiana de ropa infantil que une diseño, personajes e historias. Estamos creciendo rápidamente y avanzando en nuestra expansión internacional. Buscamos personas creativas que quieran crecer con nosotros y ayudarnos a llevar nuestras historias a nuevos públicos.
             </p>
           </motion.div>
 
-          {/* Stats */}
-          <div className="max-w-2xl mx-auto mt-8 text-neutral-600 space-y-4 text-center">
-            <p>Nuestra aspiración: llevar Dosmicos al mundo con una expansión global.</p>
+          {/* Galería: fotos reales de producto */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-10 md:mt-12">
+            {gallery.map(photo => (
+              <div key={photo.src} className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-neutral-100">
+                <Image src={photo.src} alt={photo.alt} fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" />
+              </div>
+            ))}
+          </div>
+
+          <div className="max-w-2xl mx-auto mt-10 md:mt-12 text-neutral-600 space-y-8">
+            <div className="text-center space-y-3">
+              <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-neutral-900">2 cupos para crear historias y piezas audiovisuales, desde la idea hasta la edición</h2>
+              <p>Para estudiantes de cine y televisión, medios audiovisuales, artes visuales, animación, diseño, narrativas digitales, comunicación, publicidad y programas afines.</p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-neutral-900 mb-3">¿En qué podrás participar?</h3>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Desarrollo de ideas, conceptos y guiones.</li>
+                <li>Preparación y producción de grabaciones.</li>
+                <li>Cámara, iluminación y sonido.</li>
+                <li>Montaje, edición y animación.</li>
+              </ul>
+              <p className="mt-3">Queremos conocer tu mirada creativa, tus fortalezas y lo que te gustaría aprender. No necesitas dominar todas estas áreas para postularte.</p>
+            </div>
             <div className="bg-neutral-50 rounded-2xl p-6 text-left space-y-3 text-sm">
-              <p><strong>Dos cupos totales:</strong> realización / edición audiovisual y guion / comunicación digital.</p>
-              <p><strong>Presencial en Bogotá.</strong> COP 2.000.000 mensuales recibidos por persona; los costos de empresa van aparte.</p>
-              <p><strong>Ingreso:</strong> noviembre de 2026–enero de 2027.</p>
-              <p><strong>Horario:</strong> lunes a viernes, 08:00–17:00, sujeto a compatibilidad académica y descansos.</p>
-              <p><strong>Líder directo:</strong> Julián Castro. La duración se acuerda según la universidad.</p>
+              <p><strong>Perfiles:</strong> realización / edición audiovisual y guion / comunicación digital.</p>
+              <p><strong>Presencial en Bogotá:</strong> Cra. 27 #63B-61.</p>
+              <p><strong>Auxilio:</strong> COP 2.000.000 mensuales + ARL en tiempo completo; en medio tiempo, proporcional a las horas.</p>
+              <p><strong>Horario flexible:</strong> tiempo completo o medio tiempo, compatible con tus clases.</p>
+              <p><strong>Inicio y duración:</strong> a convenir según el calendario y los requisitos de tu universidad.</p>
+              <p><strong>Líder directo:</strong> Julián Castro, CEO.</p>
             </div>
           </div>
         </div>

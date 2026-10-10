@@ -1,5 +1,8 @@
 export const profiles = ['Realización / edición audiovisual', 'Guion / comunicación digital'] as const
+export const audiovisualProfile = profiles[0]
+// Pregunta de brief-v2; se conserva para mostrar bien las postulaciones que la respondieron.
 export const achievementQuestion = '¿Qué es lo más impresionante que has construido, organizado o logrado FUERA de la universidad y de las notas académicas?'
+export const pieceQuestion = '¿Cuál es la pieza o el proyecto que más te enorgullece (de clase, personal o de trabajo) y qué hiciste tú en él?'
 export interface CreativeForm {
   full_name: string; email: string; university: string; program: string; profile: string; resume_url: string; impressive_achievement: string; portfolio_link: string
 }
@@ -14,10 +17,11 @@ export function validateCreativeForm(data: CreativeForm) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) errors.email = 'Ingresa un correo válido'
   if (!data.resume_url) errors.resume_url = 'Adjunta tu hoja de vida'
   if (data.portfolio_link.trim() && !isWebUrl(data.portfolio_link.trim())) errors.portfolio_link = 'Usa un enlace completo http o https'
+  else if (data.profile === audiovisualProfile && !data.portfolio_link.trim()) errors.portfolio_link = 'Comparte el link a tu reel o a tus piezas'
   return errors
 }
-export function creativeDetails(data: CreativeForm) { return {version:'creative-2026-brief-v2' as const,profile:data.profile,program:data.program.trim()} }
-export type BriefCreativeDetails = Omit<ReturnType<typeof creativeDetails>, 'program'> & {program?: string}
+export function creativeDetails(data: CreativeForm) { return {version:'creative-2026-brief-v3' as const,profile:data.profile,program:data.program.trim()} }
+export type BriefCreativeDetails = {version:'creative-2026-brief-v2' | 'creative-2026-brief-v3';profile:string;program?: string}
 export interface LegacyCreativeDetails {
   version:'creative-2026-v1';profile:string;program:string;eligibility:string;start_date:string;onsite:string;schedule:string;availability_notes:string
   works:{url:string;contribution:string}[]
@@ -26,11 +30,18 @@ export type CreativeDetails = BriefCreativeDetails | LegacyCreativeDetails
 export function isCreativeDetails(value: unknown): value is CreativeDetails {
   if (!value || typeof value !== 'object') return false
   const data = value as Record<string, unknown>
-  if (data.version === 'creative-2026-brief-v2') return typeof data.profile === 'string' && (data.program === undefined || typeof data.program === 'string')
+  if (data.version === 'creative-2026-brief-v2' || data.version === 'creative-2026-brief-v3') return typeof data.profile === 'string' && (data.program === undefined || typeof data.program === 'string')
   return data.version === 'creative-2026-v1' && ['profile', 'program', 'eligibility', 'start_date', 'onsite', 'schedule', 'availability_notes'].every(key => typeof data[key] === 'string') && Array.isArray(data.works) && data.works.length === 2 && data.works.every(work => !!work && typeof work === 'object' && typeof work.url === 'string' && typeof work.contribution === 'string')
 }
+// Pregunta abierta que respondió cada versión; v1 no tenía.
+export function questionAsked(data: CreativeDetails) {
+  return data.version === 'creative-2026-brief-v3' ? pieceQuestion : data.version === 'creative-2026-brief-v2' ? achievementQuestion : undefined
+}
+export function answerTitle(data: CreativeDetails) {
+  return data.version === 'creative-2026-brief-v3' ? 'Pieza de la que más se enorgullece' : 'Logro más impresionante'
+}
 export function creativeSummary(data: CreativeDetails) {
-  if (data.version === 'creative-2026-brief-v2') return [`Perfil: ${data.profile}`, ...(data.program ? [`Carrera: ${data.program}`] : [])].join('\n')
+  if (data.version !== 'creative-2026-v1') return [`Perfil: ${data.profile}`, ...(data.program ? [`Carrera: ${data.program}`] : [])].join('\n')
   return [`Perfil: ${data.profile}`, `Programa: ${data.program}`, `Habilitación: ${data.eligibility}`, `Inicio: ${data.start_date}`, `Presencial Bogotá: ${data.onsite}`, `Horario: ${data.schedule}`, `Compatibilidad académica: ${data.availability_notes || 'Sin ajustes indicados'}`, ...data.works.map((work, i) => `Trabajo ${i + 1}: ${work.url}\nAporte personal: ${work.contribution}`)].join('\n')
 }
 // Stable identity for this campaign: retries never read or overwrite candidates.
