@@ -1,6 +1,6 @@
 const {chromium,webkit}=require('playwright')
 const assert=require('node:assert/strict'),fs=require('node:fs')
-const base='http://127.0.0.1:3100',seen=new Set(),inserted=[],results=[]
+const base='http://127.0.0.1:3100',seen=new Set(),inserted=[],results=[],AUDIO='Realización / edición audiovisual',REEL='https://example.test/reel'
 async function run(engine,viewport,name){
  const browser=await engine.launch({headless:true,executablePath:engine===chromium?process.env.TEST_CHROMIUM_PATH:process.env.TEST_WEBKIT_PATH})
  try{
@@ -29,7 +29,7 @@ async function run(engine,viewport,name){
   if(url.origin===base)return route.continue()
   return route.abort()
  })
- async function basic(candidate=email){await page.fill('#full_name','Postulante local');await page.fill('#email',candidate);await page.selectOption('#profile',profile);await page.fill('#university','Universidad local');await page.fill('#program','Carrera local');await page.fill('#impressive_achievement','Organicé un proyecto comunitario fuera de la universidad.')}
+ async function basic(candidate=email){await page.fill('#full_name','Postulante local');await page.fill('#email',candidate);await page.selectOption('#profile',profile);await page.fill('#university','Universidad local');await page.fill('#program','Carrera local');await page.fill('#impressive_achievement','Organicé un proyecto comunitario fuera de la universidad.');if(profile===AUDIO)await page.fill('#portfolio_link',REEL)}
  async function cv(){await page.locator('#resume-upload').setInputFiles({name:'cv.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4\nlocal fixture')});await page.getByText('Archivo subido: cv.pdf',{exact:true}).waitFor()}
  const submit=()=>page.getByRole('button',{name:'Enviar postulación',exact:true}).click()
  await page.goto(base);await page.getByRole('heading',{name:'Tu postulación',exact:true}).waitFor();await page.waitForFunction(()=>Array.from(document.querySelectorAll('main [style]')).every(e=>Number(getComputedStyle(e).opacity)>.99))
@@ -43,12 +43,13 @@ async function run(engine,viewport,name){
  await page.locator('#resume-upload').setInputFiles({name:'huge.pdf',mimeType:'application/pdf',buffer:Buffer.alloc(5*1024*1024+1)});assert.equal(uploads,0)
  await cv();assert.equal(uploads,1)
  await page.fill('#portfolio_link','javascript:alert(1)');await submit();await page.locator('#portfolio_link-error').waitFor();assert.equal(posts,0)
- await page.fill('#portfolio_link','') // Optional portfolio cannot be required by old validation.
+ if(profile===AUDIO){await page.fill('#portfolio_link','');await submit();await page.locator('#portfolio_link-error').waitFor();assert.equal(posts,0)} // El reel es obligatorio para audiovisual.
+ await page.fill('#portfolio_link',profile===AUDIO?REEL:'') // Para guion sigue siendo opcional.
  mode='error';await submit();await page.getByText(/No pudimos confirmar el envío/).waitFor();assert.equal(await page.inputValue('#impressive_achievement'),'Organicé un proyecto comunitario fuera de la universidad.');const failedId=payload.id
  mode='ok';await page.getByRole('button',{name:'Enviar postulación',exact:true}).evaluate(e=>{e.click();e.click();e.click()});await page.getByRole('heading',{name:'Postulación recibida',exact:true}).waitFor();assert.equal(posts,2);assert.equal(payload.id,failedId)
- assert.equal(payload.phone,'');assert.equal(payload.university,'Universidad local');assert.equal(payload.impressive_achievement,'Organicé un proyecto comunitario fuera de la universidad.');assert.deepEqual(payload.creative_application,{version:'creative-2026-brief-v2',profile,program:'Carrera local'});assert(!payload.portfolio_link)
+ assert.equal(payload.phone,'');assert.equal(payload.university,'Universidad local');assert.equal(payload.impressive_achievement,'Organicé un proyecto comunitario fuera de la universidad.');assert.deepEqual(payload.creative_application,{version:'creative-2026-brief-v3',profile,program:'Carrera local'});if(profile===AUDIO)assert.equal(payload.portfolio_link,REEL);else assert(!payload.portfolio_link)
  await page.reload();await basic(` ${email.toUpperCase()} `);await cv();await submit();await page.getByRole('heading',{name:'Postulación recibida',exact:true}).waitFor();assert.equal(payload.id,failedId);assert.equal(inserted.length,baseline+1);assert.deepEqual(errors,[])
- assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));results.push(`${name}: eight fields, exact question, CV required, optional portfolio, removed requirements absent, validation/file/URL/errors/retry/double-click/reload duplicate OK`)
+ assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));results.push(`${name}: eight fields, exact question, CV required, reel required for audiovisual/optional for guion, removed requirements absent, validation/file/URL/errors/retry/double-click/reload duplicate OK`)
  }finally{await browser.close()}
 }
 ;(async()=>{await run(chromium,{width:1440,height:1000},'desktop-chromium');await run(chromium,{width:390,height:844},'mobile-chromium');await run(webkit,{width:375,height:812},'mobile-webkit');fs.writeFileSync('evidence/test-results.json',JSON.stringify({results,insertedCount:inserted.length,productionRequests:0},null,2));console.log(results.join('\n'))})().catch(e=>{console.error(e);process.exit(1)})

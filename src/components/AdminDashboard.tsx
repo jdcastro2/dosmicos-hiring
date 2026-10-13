@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { jsPDF } from 'jspdf'
 import { getApplications, getResumeLink, CandidateApplication } from '@/lib/supabase'
-import { creativeSummary, isCreativeDetails, achievementQuestion } from '@/lib/creative'
+import { creativeSummary, isCreativeDetails, questionAsked, answerTitle } from '@/lib/creative'
 import { logoutAdmin, adminRequest } from '@/lib/auth'
 
 export default function AdminDashboard() {
@@ -135,8 +135,9 @@ export default function AdminDashboard() {
       addSectionTitle('Práctica creativa')
       addWrappedText(creativeSummary(app.creative_application), 10)
       if (app.impressive_achievement) {
-        addSectionTitle('Logro más impresionante')
-        if (app.creative_application.version === 'creative-2026-brief-v2') addWrappedText(achievementQuestion, 11, true)
+        addSectionTitle(answerTitle(app.creative_application))
+        const question = questionAsked(app.creative_application)
+        if (question) addWrappedText(question, 11, true)
         addWrappedText(app.impressive_achievement, 10)
       }
     } else {
@@ -467,7 +468,7 @@ export default function AdminDashboard() {
                   <section>
                     <h3 className="text-sm font-medium text-neutral-500 uppercase tracking-wider mb-4">Práctica creativa</h3>
                     <p className="text-neutral-600 bg-neutral-50 rounded-lg p-4 whitespace-pre-wrap break-words">{creativeSummary(selectedApp.creative_application)}</p>
-                    {selectedApp.impressive_achievement && <div className="mt-6"><h3 className="text-sm font-medium text-neutral-500 mb-3">{selectedApp.creative_application.version === 'creative-2026-brief-v2' ? achievementQuestion : 'Logro más impresionante'}</h3><p className="text-neutral-600 bg-neutral-50 rounded-lg p-4 whitespace-pre-wrap break-words">{selectedApp.impressive_achievement}</p></div>}
+                    {selectedApp.impressive_achievement && <div className="mt-6"><h3 className="text-sm font-medium text-neutral-500 mb-3">{questionAsked(selectedApp.creative_application) ?? answerTitle(selectedApp.creative_application)}</h3><p className="text-neutral-600 bg-neutral-50 rounded-lg p-4 whitespace-pre-wrap break-words">{selectedApp.impressive_achievement}</p></div>}
                   </section>
                 ) : <>
                 {/* Impressive Achievement */}
