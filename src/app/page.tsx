@@ -7,13 +7,6 @@ import CreativeFields from '@/components/CreativeFields'
 import { CreativeForm, emptyCreativeForm, validateCreativeForm, creativeDetails, creativeApplicationId } from '@/lib/creative'
 import { submitApplication, uploadResume, CandidateApplication } from '@/lib/supabase'
 
-const gallery = [
-  { src: '/galeria/ruana-gato-negro.jpg', alt: 'Niña con la ruana de gato negro de Dosmicos junto a un árbol' },
-  { src: '/galeria/ruana-monstruo-verde.jpg', alt: 'Niño jugando con la ruana de monstruo verde de Dosmicos' },
-  { src: '/galeria/ruana-monstruo-rosa.jpg', alt: 'Niña con la ruana de monstruo rosa de Dosmicos' },
-  { src: '/galeria/ruana-calabaza.jpg', alt: 'Niño de espaldas con la ruana de calabaza de Dosmicos' },
-]
-
 export default function Home() {
   const [formData, setFormData] = useState<CreativeForm>(emptyCreativeForm)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -86,15 +79,6 @@ export default function Home() {
               Somos Dosmicos, una marca colombiana de ropa infantil que une diseño, personajes e historias. Estamos creciendo rápidamente y avanzando en nuestra expansión internacional. Buscamos personas creativas que quieran crecer con nosotros y ayudarnos a llevar nuestras historias a nuevos públicos.
             </p>
           </motion.div>
-
-          {/* Galería: fotos reales de producto */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-10 md:mt-12">
-            {gallery.map(photo => (
-              <div key={photo.src} className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-neutral-100">
-                <Image src={photo.src} alt={photo.alt} fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" />
-              </div>
-            ))}
-          </div>
 
           <div className="max-w-2xl mx-auto mt-10 md:mt-12 text-neutral-600 space-y-8">
             <div className="text-center space-y-3">
